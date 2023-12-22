@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: Pod
+metadata:
+        name: init-pod
+
+spec:
+        volumes:
+        - name: vol1
+          emptyDir: {}
+        containers:
+        - name: aplinegrras
+          image: alpine
+          command: ["/bin/sh","-c","if [ -f /dir1/faith.txt ]; then sleep 10000; else exit 1; fi"]
+          volumeMounts:
+                  - name: vol1
+                    mountPath: /dir1
+        initContainers:
+                - name: initpod
+                  image: busybox
+                  command: ["/bin/sh", "-c","touch /dir1/faith.txt"]
+                  volumeMounts:
+                          - name: vol1
+                            mountPath: /dir1
