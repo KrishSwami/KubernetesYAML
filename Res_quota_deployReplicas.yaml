@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+        name: replica-resource-quota
+        labels:
+                app: webserver
+spec:
+        replicas: 5
+        selector:
+                matchLabels:
+                        app: webserver
+
+        template:
+                metadata:
+                        labels:
+                                app: webserver
+                spec:
+                        containers:
+                                - name: nginx
+                                  image: nginx
+                                  resources:
+                                          requests:
+
+                                            memory: "500Mi"
+                                            cpu: "100m"
+                                          limits:
+                                            memory: "1Gi"
+                                            cpu: "200m"
