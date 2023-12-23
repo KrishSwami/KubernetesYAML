@@ -1,0 +1,12 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx
+spec:
+        replicas: 5
+        template:
+
+                containers:
+                 - name: nginx
+                   image: nginx
+                nodeName: ip-172-31-43-251
