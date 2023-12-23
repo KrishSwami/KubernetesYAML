@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+        name: ds
+        namespace: grras
+        labels:
+                app: backend
+spec:
+        selector:
+                matchLabels:
+                        app: backend
+
+        template:
+                metadata:
+                        name: logs
+                        labels:
+                                app: backend
+                spec:
+                        containers:
+                        - name: redis
+                          image: redis

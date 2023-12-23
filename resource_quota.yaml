@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: google-quota
+  namespace: google
+spec:
+  hard:
+    cpu: "1"
+    memory: 1G
+    persistentvolumeclaims: "5"
+    pods: "10"
+    services: "3"
+status: {}

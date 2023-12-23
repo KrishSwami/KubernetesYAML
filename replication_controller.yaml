@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: ReplicationController
+metadata:
+        name: udb
+
+spec:
+        replicas: 3
+        selector:
+                app: udbapp
+        template:
+                metadata:
+                        name: nginx
+                        labels:
+                                app: udbapp
+                spec:
+                  containers:
+                          - name: nginx
+                            image: nginx
