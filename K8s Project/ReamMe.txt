@@ -1,0 +1,2 @@
+#kubectl create ns flipkart --> Create your project namespace (FLIPKART) for all deployments related to your project.
+

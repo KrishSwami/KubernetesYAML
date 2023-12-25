@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: flipkartweb
+  name: flipkartweb
+  namespace: flipkart
+spec:
+  replicas: 5
+  selector:
+    matchLabels:
+      app: flipkartweb
+  template:
+    metadata:
+      labels:
+        app: flipkartweb
+    spec:
+      containers:
+      - image: nginx
+        name: nginx
