@@ -1,0 +1,26 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingressgroup
+spec:
+  rules:
+    - host: grras.com
+      http:
+        paths:
+        - pathType: Prefix
+          path: "/"
+          backend:
+            service:
+              name: grras-svc
+              port:
+                number: 80
+    - host: giptech.com
+      http:
+        paths:
+        - pathType: Prefix
+          path: "/"
+          backend:
+            service:
+              name: giptech-svc
+              port:
+                number: 80
