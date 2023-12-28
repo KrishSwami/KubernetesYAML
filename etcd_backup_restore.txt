@@ -1,0 +1,97 @@
+Krishna Swami
+
+Etcd Backup And Restore In Kubernetes:
+
+Installing and Placing Etcd Binaries :-
+
+1)  Create a temporary directory & download the ETCD binaries.
+
+$ mkdir -p /tmp/etcd && cd /tmp/etcd
+$ curl -s https://api.github.com/repos/etcd-io/etcd/releases/latest | grep browser_download_url | grep linux-amd64 | cut -d '"' -f 4 | wget -qi -
+
+2) Unzip the compressed binaries:
+
+$ tar xvf *.tar.gz
+
+3) Move the etcd folder to /local/bin/ makes the etcd binary globally accessible on your system, simplifying the process of running etcd commands.
+
+$ cd etcd-*/
+$ mv etcd* /usr/local/bin/
+$ cd ~
+$ rm -rf /tmp/etcd
+
+NOTE - Use sudo whenever using root directory or get permission denied error
+
+
+Find K8s Manifest Location
+
+# cat /var/lib/kubelet/config.yaml  
+
+(It is usually /etc/kubernetes/manifests, unless changed by admin in config file)
+With this Manifest location, you can check the Kubernetes static pods location and find Api-server and ETCD pod location then under these pods you can check certificate file and data-dir location.
+
+
+BACKUP THE ETCD AND RESTORE IT
+
+Taking Snapshot and Verifying it:
+
+1) Check backup Command flag which you need to include in the command
+
+$ ETCDCTL_API=3 etcdctl snapshot backup -h
+
+2) Take a snapshot of the etcd datastore using etcdctl:
+
+$ ETCDCTL_API=3 etcdctl snapshot save snapshot.db --cacert /etc/kubernetes/pki/etcd/ca.crt --cert /etc/kubernetes/pki/etcd/server.crt --key /etc/kubernetes/pki/etcd/server.key
+
+3) View that the snapshot was successful:
+
+$ ETCDCTL_API=3 etcdctl snapshot status --write-out=table snapshot.db
+
+Always make a Backup to avoid data loss:
+
+Make a compressed copy of everything in the etcd directory, including all files and folders, certificates, key files, and anything else in that folder.
+
+$ tar -zcvf etcd.tar.gz /etc/kubernetes/pki/etcd
+
+Restoring Etcd From Snapshot & Verify:
+
+1) Check the present state of the cluster which is stored in present snapshot taken in above task:
+
+$ kubectl get all
+
+2) To verify, we will now create a pod. Since the new pod is not present in the snapshot, it will not be available when we restore the content using the restore command.
+
+$ kubectl run testing-restore --image=nginx
+$ kubectl get pods
+
+3) Check restore Command flag which you need to include in command
+
+$ ETCDCTL_API=3 etcdctl snapshot restore -h
+
+4) To restore we will have to first delete the present ETCD content. So lets look into and grab all the details we need for the restore command to execute
+
+$ cat /etc/kubernetes/manifests/etcd.yaml
+
+5) Will delete the present content of ETCD and execute the restore command
+
+$ rm -rf /var/lib/etcd
+
+$ ETCDCTL_API=3 etcdctl snapshot restore snapshot.db --endpoints=https://127.0.0.1:2379 --cacert=/etc/kubernetes/pki/etcd/ca.crt --cert=/etc/kubernetes/pki/etcd/server.crt --key=/etc/kubernetes/pki/etcd/server.key --name=kubeadm-master --data-dir=/var/lib/etcd --initial-cluster=kubeadmmaster=https://10.0.0.4:2380 --initial-cluster-token=etcd-cluster-1 --initial-advertise-peerurls=https://10.0.0.4:2380
+
+6) Verify that the cluster is back to status of which we had taken the snapshot
+
+$ kubectl get pods
+
+
+
+Scenarios & Use Cases:
+Prevent Data Loss:
+Regular backups to avoid accidental data deletion or misconfigurations.
+Disaster Recovery:
+Off-site backups for recovering from catastrophic etcd cluster failures.
+Cluster Migration:
+Backup before migrating, restore on the new cluster for a seamless transition.
+Rollback to Stable State:
+Use backups to revert the cluster to a stable state after faulty changes.
+Testing & Development:
+Snapshot before testing changes; restore if issues arise.
