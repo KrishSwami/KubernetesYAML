@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: reddit-deployment
+  labels:
+    app: reddit-clone
+  namespace: reddit
+spec:
+  replicas: 6
+  selector:
+    matchLabels:
+      app: reddit-clone
+  template:
+    metadata:
+      labels:
+        app: reddit-clone
+    spec:
+      containers:
+      - name: myreddit
+        image: krishswami/reddit-clone:latest
+        ports:
+        - containerPort: 80
