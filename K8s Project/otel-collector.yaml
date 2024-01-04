@@ -1,0 +1,112 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: collector-config
+  namespace: s-otel-demo
+data:
+  collector.yaml: |
+    receivers:
+      fluentforward:
+        endpoint: 0.0.0.0:8006
+      otlp:
+        protocols: 
+          grpc:
+      jaeger:
+        protocols:
+          grpc:
+            endpoint: jaeger:14250
+          thrift_compact:
+            endpoint: jaeger:6831
+          thrift_http:
+            endpoint: jaeger:14268      
+    processors:
+      batch:
+    exporters:
+      prometheus:
+        endpoint: "0.0.0.0:8889"
+      logging:
+        loglevel: debug
+      otlp/jaeger:
+        endpoint: 'jaeger-collector:4317'
+        insecure: true
+        insecure_skip_verify: true
+      file: # the File Exporter, to ingest logs to local file
+        path: ./*
+        rotation:        
+    service:
+      pipelines:
+        logs/dev:
+          receivers: [fluentforward]
+          processors: [batch]
+          exporters: [logging,file]
+        traces:
+          receivers: [jaeger,otlp]
+          processors: [batch]
+          exporters: [otlp/jaeger,logging]
+        metrics:
+          receivers: [otlp]
+          processors: [batch]
+          exporters: [prometheus,logging]
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: opentelemetrycollector
+  namespace: s-otel-demo
+  
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: opentelemetrycollector
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: opentelemetrycollector
+    spec:
+      containers:
+      - name: otelcol
+        ports:
+          - containerPort: 8888
+          - containerPort: 14268
+          - containerPort: 8006
+          
+        args:
+        - --config=/conf/collector.yaml
+        image: otel/opentelemetry-collector:0.18.0
+        volumeMounts:
+        - mountPath: /conf
+          name: collector-config
+      volumes:
+      - configMap:
+          items:
+          - key: collector.yaml
+            path: collector.yaml
+          name: collector-config
+        name: collector-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: opentelemetrycollector
+  namespace: s-otel-demo
+spec:
+  ports:
+  - name: grpc-otlp
+    port: 4317
+    protocol: TCP
+    targetPort: 4317 
+  - name: "8888"
+    port: 8888
+    targetPort: 8888   
+  - name: "14268"
+    port: 14268
+    targetPort: 14268
+  - name: "8006"
+    port: 8006
+    targetPort: 8006
+  selector:
+    app.kubernetes.io/name: opentelemetrycollector
+  type: ClusterIP
